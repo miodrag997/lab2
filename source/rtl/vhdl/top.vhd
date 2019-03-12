@@ -16,6 +16,8 @@ use ieee.std_logic_unsigned.all;
 
 entity top is
   generic (
+    max_cnt   : std_logic_vector(23 downto 0):= "001011011100011011000000";
+	                                             
     RES_TYPE             : natural := 1;
     TEXT_MEM_DATA_WIDTH  : natural := 6;
     GRAPH_MEM_DATA_WIDTH : natural := 32
@@ -156,7 +158,8 @@ architecture rtl of top is
   signal dir_blue            : std_logic_vector(7 downto 0);
   signal dir_pixel_column    : std_logic_vector(10 downto 0);
   signal dir_pixel_row       : std_logic_vector(10 downto 0);
-
+  signal offset              : std_logic_vector(7 downto 0);
+  signal cnt_s  : std_logic_vector(23 downto 0);
 begin
 
   -- calculate message lenght from font size
@@ -169,7 +172,7 @@ begin
   
   -- removed to inputs pin
   direct_mode <= '0';
-  display_mode     <= "01";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
+  display_mode     <= "10";  -- 01 - text mode, 10 - graphics mode, 11 - text & graphics
   
   font_size        <= x"1";
   show_frame       <= '1';
@@ -252,16 +255,16 @@ begin
   --dir_blue
   
 	
-	dir_red <= x"FF" when dir_pixel_column <160 else
-	           x"FF" when dir_pixel_column >320 and dir_pixel_column < 480 else
-				  x"00";
-	dir_green <= x"FF" when	dir_pixel_column < 320 else
-					 x"00";
-	dir_blue <= x"FF" when dir_pixel_column < 80 else
-					x"FF" when dir_pixel_column > 160 and dir_pixel_column < 240 else
-					x"FF" when dir_pixel_column > 320 and dir_pixel_column < 400 else
-					x"FF" when dir_pixel_column > 480 and dir_pixel_column < 560 else
-					x"00";
+--	dir_red <= x"FF" when dir_pixel_column <160 else
+--	           x"FF" when dir_pixel_column >320 and dir_pixel_column < 480 else
+--				  x"00";
+--	dir_green <= x"FF" when	dir_pixel_column < 320 else
+--					 x"00";
+--	dir_blue <= x"FF" when dir_pixel_column < 80 else
+--					x"FF" when dir_pixel_column > 160 and dir_pixel_column < 240 else
+--					x"FF" when dir_pixel_column > 320 and dir_pixel_column < 400 else
+--				x"FF" when dir_pixel_column > 480 and dir_pixel_column < 560 else
+--					x"00";
  
   -- koristeci signale realizovati logiku koja pise po TXT_MEM
   --char_address
@@ -269,24 +272,76 @@ begin
   --char_we
   char_we <= '1';
   
-	process (pix_clock_s, vga_rst_n_s) begin
+	process (pix_clock_s, reset_n_i) begin
 	
-		if (vga_rst_n_s = '0') then
+		if (reset_n_i = '0') then
 			char_address <= (others=>'0');
 		elsif(rising_edge(pix_clock_s)) then
+		   if (char_address = 4799) then
+			 char_address <= (others=>'0');
+			 else
 			char_address <= char_address + 1;
+		end if;
 		end if;
 
 	end process;	
 	
-	char_value <= "001100" when char_address = 5 else
-					"001101" when char_address = 7 else
+	process(pix_clock_s,reset_n_i) begin
+	   if (reset_n_i ='0') then
+		     cnt_s <=(others=>'0');
+			  offset <= (others => '0');
+			  elsif(rising_edge(pix_clock_s)) then
+			  if (cnt_s = max_cnt) then
+			  
+			    cnt_s <= (others=>'0');
+				  if (offset = 599) then
+				    offset <= (others=>'0');
+					 else offset <= offset + 1;
+					 end if;
+				 else 
+				 cnt_s <= cnt_s + 1;
+				 end if;
+				 end if;
+				 end process;
+				 
+	
+	   
+	
+	
+	
+	char_value <=  "001100" when char_address=85+offset else
+	               "000001" when char_address=86+offset else
+					   "011010" when char_address=87+offset else
+						"000001" when char_address=88+offset else
+						"100000" when char_address=89+offset else
+						"001001" when char_address=90+offset else
+						"100000" when char_address=91+offset else
+						"001101" when char_address=92+offset else
+						"001001" when char_address=93+offset else
+						"010011" when char_address=94+offset else
+						"001011" when char_address=95+offset else
+						"001111" when char_address=96+offset else
 						"100000";
   
   -- koristeci signale realizovati logiku koja pise po GRAPH_MEM
   --pixel_address
   --pixel_value
   --pixel_we
-  
+    pixel_we <= '1';
+	 process (pix_clock_s,reset_n_i) begin
+	   if (reset_n_i ='0') then
+		pixel_address <= (others =>'0');
+		elsif (rising_edge(pix_clock_s)) then
+		    if (pixel_address = 9600) then
+			 pixel_address <= (others => '0');
+			 else 
+			 pixel_address <= pixel_address + 1;
+			 end if;
+			 end if;
+			 end process;
+			 
+	
+	 pixel_value <= (others => '1') when pixel_address = 4010
+	   else (others=>'0');
   
 end rtl;
