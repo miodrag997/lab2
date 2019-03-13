@@ -159,6 +159,8 @@ architecture rtl of top is
   signal dir_pixel_column    : std_logic_vector(10 downto 0);
   signal dir_pixel_row       : std_logic_vector(10 downto 0);
   signal offset              : std_logic_vector(7 downto 0);
+  
+  signal setter : std_logic_vector (10 downto 0):= (others=>'0');
   signal cnt_s  : std_logic_vector(23 downto 0);
 begin
 
@@ -270,7 +272,7 @@ begin
   --char_address
   --char_value
   --char_we
-  char_we <= '1';
+	char_we <= '1';
   
 	process (pix_clock_s, reset_n_i) begin
 	
@@ -278,10 +280,10 @@ begin
 			char_address <= (others=>'0');
 		elsif(rising_edge(pix_clock_s)) then
 		   if (char_address = 4799) then
-			 char_address <= (others=>'0');
-			 else
-			char_address <= char_address + 1;
-		end if;
+				char_address <= (others=>'0');
+			else
+				char_address <= char_address + 1;
+			end if;
 		end if;
 
 	end process;	
@@ -290,24 +292,19 @@ begin
 	   if (reset_n_i ='0') then
 		     cnt_s <=(others=>'0');
 			  offset <= (others => '0');
-			  elsif(rising_edge(pix_clock_s)) then
-			  if (cnt_s = max_cnt) then
-			  
-			    cnt_s <= (others=>'0');
-				  if (offset = 599) then
-				    offset <= (others=>'0');
-					 else offset <= offset + 1;
-					 end if;
-				 else 
+		elsif(rising_edge(pix_clock_s)) then
+			if (cnt_s = max_cnt) then 
+				cnt_s <= (others=>'0');
+				if (offset = 599) then
+					offset <= (others=>'0');
+				else 
+					offset <= offset + 1;
+				end if;
+			else 
 				 cnt_s <= cnt_s + 1;
-				 end if;
-				 end if;
-				 end process;
-				 
-	
-	   
-	
-	
+			end if;
+		end if;
+	end process;
 	
 	char_value <=  "001100" when char_address=85+offset else
 	               "000001" when char_address=86+offset else
@@ -327,21 +324,30 @@ begin
   --pixel_address
   --pixel_value
   --pixel_we
-    pixel_we <= '1';
-	 process (pix_clock_s,reset_n_i) begin
+  --4490, 4510, 4530...5130
+   pixel_we <= '1';
+	 
+	process (pix_clock_s,reset_n_i) begin
 	   if (reset_n_i ='0') then
-		pixel_address <= (others =>'0');
+			pixel_address <= (others =>'0');
 		elsif (rising_edge(pix_clock_s)) then
 		    if (pixel_address = 9600) then
-			 pixel_address <= (others => '0');
+				pixel_address <= (others => '0');
 			 else 
-			 pixel_address <= pixel_address + 1;
+				pixel_address <= pixel_address + 1;
 			 end if;
-			 end if;
-			 end process;
-			 
+		end if;
+	end process;
 	
-	 pixel_value <= (others => '1') when pixel_address = 4010
-	   else (others=>'0');
-  
+	process (pixel_address) begin
+		if(setter < 640) then
+			if(pixel_address = 4490 + setter) then
+				setter <= setter + 20;
+				pixel_value <= (others=>'1');
+			else
+				pixel_value <= (others=>'0');
+			end if;
+		end if;
+	end process;
+			 
 end rtl;
