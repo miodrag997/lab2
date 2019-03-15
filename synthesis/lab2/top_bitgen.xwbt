@@ -1,8 +1,8 @@
 INTSTYLE=ise
-INFILE=D:\ra205-2016\lab2\synthesis\lab2\top.ncd
-OUTFILE=D:\ra205-2016\lab2\synthesis\lab2\top.bit
+INFILE=D:\RA85-2016\lprs2\lab2\synthesis\lab2\top.ncd
+OUTFILE=D:\RA85-2016\lprs2\lab2\synthesis\lab2\top.bit
 FAMILY=Spartan6
 PART=xc6slx45-2fgg676
-WORKINGDIR=D:\ra205-2016\lab2\synthesis\lab2
+WORKINGDIR=D:\RA85-2016\lprs2\lab2\synthesis\lab2
 LICENSE=ISE
 USER_INFO=209858334_178080923_210593072_769
